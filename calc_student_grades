@@ -1,0 +1,169 @@
+# Eliza Geswein
+# 11/09/2022
+
+# Asks for student exam grades, writes into CSV file
+# Calculates student average exam grades & letter grades
+# Displays grade distribution bar chart
+  
+import pandas as pd
+import numpy as np
+import statistics as stats
+import matplotlib.pyplot as plt
+import seaborn as sns
+import csv
+
+filename = 'grades.csv'
+
+#Returns CSV file of student test scores
+def input_test_scores():
+    
+    # Initialize list for student names and test scores
+    scores = []
+    
+    valid = False
+    
+    # Asks user to input num of students
+    # Only accepts if value is > 0
+    while not valid:
+        try:
+            num_students = int(input('How many students: '))
+        except ValueError:
+            print('Invalid input. You must enter two integers. Try again.')
+        else:
+            if num_students > 0:
+                valid = True
+            else:
+                print('Invalid input. Must be > 0. Try again.')
+            
+    valid = False
+    
+    # Asks user to input num of tests
+    # Only accepts if value is > 0
+    while not valid:
+        try:
+            num_tests = int(input('How many tests per student: '))
+        except ValueError:
+            print('Invalid input. You must enter two integers. Try again.')
+        else:
+            if num_tests > 0:
+                valid = True
+            else:
+                print('Invalid input. Must be > 0. Try again!')
+
+    try:
+        #opens grades.csv for writing into
+        with open (filename, mode = 'w', newline = '') as grades:
+            writer = csv.writer(grades)
+    
+            # Asks user for student names
+            for i in range(num_students):
+                first_name = input(f'Enter the first name of student {i+1}:')
+                last_name = input(f'Enter the last name of student {i+1}:')
+                    
+                tests = [first_name, last_name]
+                    
+                # Asks for each student's test scores
+                print(f'Enter test scores for student {i+1}:')
+                    
+                for j in range(num_tests):
+                    score = float(input(f'\tEnter score {j+1}: '))
+                        
+                    tests.append(score)
+                    
+                # Adds student's name and test scores to list of scores
+                scores.append(tests)
+                    
+                # Adds student's name and test scores as row in CSV file
+                writer.writerow(tests)
+    except OSError:
+        ('There was a file related error. Try again.')
+    else:
+        print(f'Data saved to {filename}.')
+        print(f'Student names and grades: {scores}')
+
+    # Application logic
+input_test_scores()
+
+
+#returns associated letter grade for a given score
+def calc_grade(score):
+    #list of non-failing grades
+    grades = ['A', 'B', 'C', 'D']  
+    #list of score thresholds for each grade
+    thresholds = [90, 80, 70, 60]
+
+    #set default grade
+    grade = 'F'
+
+    i = 0
+    
+    #sequential range search
+    while i < len(thresholds) and score < thresholds[i]:
+        i += 1
+
+    if i < len(thresholds):
+        grade = grades[i]
+
+    return grade
+
+#outputs grade distribution bar chart
+def summarize_test_scores():
+    
+    filename = 'grades.csv'
+    
+    #empty list for student grades
+    grades = [] 
+
+    grades_df = pd.read_csv(filename, header=None)
+    
+    #num of columns - first name, last name columns
+    num_exams = grades_df.shape[1] - 2   
+    print('\n      Grade Summary')
+    print('Student Mean Score Grade')
+    print('------- ---------- -----')
+    
+    student_exam_avgs = list(grades_df.mean(axis=1, numeric_only=True))
+    
+    for i in range(len(grades_df)):
+        first_name = grades_df.iat[i, 0]
+        last_name = grades_df.iat[i,1]
+        
+        print(f'{first_name:<15} {last_name:<15}', end=' ')
+        #calculates mean of student test scores
+        s_grade = calc_grade(student_exam_avgs[i])
+        
+        grades.append(s_grade)
+        print(f'{s_grade:^5}')
+
+    grades += ['A', 'B', 'C', 'D', 'F']
+    
+    values, counts = np.unique(grades, return_counts=True)
+    
+    #adds one of each grade to list
+    for i in range(len(counts)):
+        #remove one from count
+        counts[i] -= 1
+
+    print('\nGrades and frequencies:')
+    for value, count in zip(values, counts):
+        print(f'{value}: {count}')
+
+    sns.set_style('whitegrid')
+    #assigns x and y variables
+    axes = sns.barplot(x=values, y=counts, palette='bright')
+    axes.set_title('Grade Distribution')
+    axes.set(xlabel='Grades', ylabel='Frequency')
+
+    #scale y-axis to make room for text above bars
+    axes.set_ylim(top=max(counts) * 1.10)
+
+    #display frequency & pct above bar
+    for bar, count in zip(axes.patches, counts):
+        text_x = bar.get_x() + bar.get_width() / 2.0
+        text_y = bar.get_height()
+        text = f'{count:,}\n{count / sum(counts):.1%}'
+        axes.text(text_x, text_y, text,
+                  fontsize=11, ha='center', va='bottom')
+
+#application logic
+summarize_test_scores()
