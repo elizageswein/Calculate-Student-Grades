@@ -3,12 +3,10 @@
 
 # Asks for student exam grades, writes into CSV file
 # Calculates student average exam grades & letter grades
-# Displays grade distribution bar chart
+# Displays grade distribution bar chart using seaborn
   
 import pandas as pd
 import numpy as np
-import statistics as stats
-import matplotlib.pyplot as plt
 import seaborn as sns
 import csv
 
